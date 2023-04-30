@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 
 void main(List<String> arguments) async{
 //getDB();
-print('Using sqlite3 ${sqlite3.version}');
+print(sqlite3.version);
 
   // Create a new in-memory database. To use a database backed by a file, you
   // can replace this with sqlite3.open(yourFilePath).
