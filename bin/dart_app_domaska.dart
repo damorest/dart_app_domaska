@@ -7,40 +7,21 @@ import 'package:http/http.dart' as http;
 
 void main(List<String> arguments) async{
 //getDB();
-print(sqlite3.version);
 
-  // Create a new in-memory database. To use a database backed by a file, you
-  // can replace this with sqlite3.open(yourFilePath).
-  final db = sqlite3.open("database.db");
+final db = sqlite3.open("database.db");
 
-  // Create a table and insert some data
-  db.execute('''
-    CREATE TABLE artists (
-      id INTEGER NOT NULL PRIMARY KEY,
-      name TEXT NOT NULL
-    );
-  ''');
+createDB(db);
 
-  // Prepare a statement to run it multiple times:
-  final stmt = db.prepare('INSERT INTO artists (name) VALUES (?)');
-  stmt
-    ..execute(['The Beatles'])
-    ..execute(['Led Zeppelin'])
-    ..execute(['The Who'])
-    ..execute(['Nirvana']);
-
-  // Dispose a statement when you don't need it anymore to clean up resources.
-  stmt.dispose();
-
+  
   // You can run select statements with PreparedStatement.select, or directly
   // on the database:
   final ResultSet resultSet =
-      db.select('SELECT * FROM artists WHERE name LIKE ?', ['The %']);
+      db.select('SELECT * FROM Names WHERE name LIKE ?', ['O %']);
 
   // You can iterate on the result set in multiple ways to retrieve Row objects
   // one by one.
   for (final Row row in resultSet) {
-    print('Artist[id: ${row['id']}, name: ${row['name']}]');
+    print('Artist[count: ${row['count']}, name: ${row['name']}]');
   }
 
   // Register a custom function we can invoke from sql:
@@ -75,4 +56,34 @@ void getDB() async {
   } else {
     print('Код ошибки: ${response.statusCode}.');
   }
+}
+void createDB(db) {
+  print(sqlite3.version);
+
+  // Create a table and insert some data
+  db.execute('''
+    CREATE TABLE IF NOT EXISTS Names (
+      count INTEGER,
+      gender TEXT,
+      name TEXT Unique,
+      probability REAL
+    );
+  ''');
+  // Prepare a statement to run it multiple times:
+  //  "count": 58730,
+  //   "gender": "male",
+  //   "name": "Oleg",
+  //   "probability": 1.0
+  // final stmt = db.prepare('INSERT INTO Names (count) VALUES (?), (gender) VALUES (?), (name) VALUES (?), (probability) VALUES (?)');
+  // stmt
+  //   ..execute([58730])
+  //   ..execute(['male'])
+  //   ..execute(['Oleg'])
+  //   ..execute([1.0]);
+  final stmt = db.execute("""
+      INSERT INTO Names (count, gender, name, probability)
+      values
+       (58730,'male','Olya',1.1)
+      ;""");
+
 }
