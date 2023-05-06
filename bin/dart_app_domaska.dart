@@ -2,17 +2,23 @@ import 'dart:convert' as convert;
 import 'dart:ffi';
 //import 'dart:html';
 import 'dart:io';
+import 'dart:svg';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:http/http.dart' as http;
+import 'dart:svg';
 
 class User {
-   var count= 55 ;
+  var count = 55 ;
   var gender  = "man";
   var name = "";
   var probability = 1.00;
 
-  User(String startName){
+  User(startCount,String startGender,  String startName,startProbability){
+    this.count = startCount;
+    this.gender = startGender;
     this.name = startName;
+    
+    this.probability = startProbability as double;
 
   }
   toJson(){
@@ -54,14 +60,14 @@ createBase();
     var exustingUser = checkExist(userName??"");
     if(exustingUser != null){
       userToSend = exustingUser;
-      print("user exsist");
+      print("This user allready exsist in DataBase");
     }else{
    
     InsertDB(itemCount,itemGender,itemName,itemPobability);
     getDataInFile(await creatFile("example"),jsonString);
      print(" count: $itemCount\n gender: $itemGender\n name: $itemName\n prob: $itemPobability\n");
-     userToSend = new User(itemName);
-
+     
+     userToSend = User(itemCount,itemGender,itemName,itemPobability);
     }
 
     print(userToSend.toJson());
@@ -85,17 +91,7 @@ createBase();
 
 void InsertDB(count, gender, name, probability) {
   final db = sqlite3.open("database.db");
-  // //print(sqlite3.version);
-  // // Create a table and insert some data
-  // db.execute('''
-  //   CREATE TABLE IF NOT EXISTS Names (
-  //     count INTEGER,
-  //     gender TEXT,
-  //     name TEXT UNIQUE ON CONFLICT IGNORE,
-  //     probability REAL
-  //   );
-  // ''');
-  
+   
   final stmt = db.execute("""
       INSERT INTO Names (count, gender, name, probability)
       values
@@ -128,8 +124,11 @@ checkExist(String userName,) {
   print(resultSet);
   if(resultSet.length > 0)
   {
-    String newName = resultSet[0]["name"];
-    User user = User(newName);
+    var newCount = resultSet[0]["count"];
+    var newGender = resultSet[0]["gender"];
+    var newName = resultSet[0]["name"];
+    var newProbability = resultSet[0]["probability"];
+    User user = User(newCount, newGender, newName, newProbability);
     
     print("User allready exist");
 
@@ -142,7 +141,7 @@ checkExist(String userName,) {
 }
 void createBase() {
   final db = sqlite3.open("database.db");
-  //print(sqlite3.version);
+  
   // Create a table and insert some data
   db.execute('''
     CREATE TABLE IF NOT EXISTS Names (
