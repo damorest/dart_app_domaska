@@ -16,41 +16,10 @@ class User {
 }
 void main(List<String> arguments) async{
 
-var user = User();
+createBase();
  getDB();
-//  var txt = await creatFile("example");
-//  print(txt);
-//user.display();
-//  creatFile("example");
- 
-
-final db = sqlite3.open("database.db");
-
-//createDB(db, user.count, user.gender, user.name,user.probability);
 
 
-  
-  // You can run select statements with PreparedStatement.select, or directly
-  // on the database:
-  // final ResultSet resultSet =
-  //     db.select('SELECT * FROM Names WHERE name LIKE ?', ['O %']);
-
-  // You can iterate on the result set in multiple ways to retrieve Row objects
-  // one by one.
-  // for (final Row row in resultSet) {
-  //   print('Artist[count: ${row['count']}, name: ${row['name']}]');
-  // }
-
-  // Register a custom function we can invoke from sql:
-  // db.createFunction(
-  //   functionName: 'dart_version',
-  //   argumentCount: const AllowedArgumentCount(0),
-  //   function: (args) => Platform.version,
-  // );
-  // print(db.select('SELECT dart_version()'));
-
-  // // Don't forget to dispose the database to avoid memory leaks
-  db.dispose();
 }
 
  void getDB() async {
@@ -72,49 +41,45 @@ final db = sqlite3.open("database.db");
     final itemPobability = jsonResponse['probability'];
     var jsonString = " \n count: $itemCount\n gender: $itemGender\n name: $itemName\n prob: $itemPobability\n";
    
+   if(!checkExist(userName??""))
+   {
+    InsertDB(itemCount,itemGender,itemName,itemPobability);
     getDataInFile(await creatFile("example"),jsonString);
-   
-    print(" count: $itemCount\n gender: $itemGender\n name: $itemName\n prob: $itemPobability\n");
+     print(" count: $itemCount\n gender: $itemGender\n name: $itemName\n prob: $itemPobability\n");
+
+   }     
+    
   } else {
     print('Код ошибки: ${response.statusCode}.');
   }  
 }
 
-void createDB(db, count, gender, name, probability) {
-  print(sqlite3.version);
-
-  // Create a table and insert some data
-  db.execute('''
-    CREATE TABLE IF NOT EXISTS Names (
-      count INTEGER,
-      gender TEXT,
-      name TEXT Unique,
-      probability REAL
-    );
-  ''');
-  // Prepare a statement to run it multiple times:
-  //  "count": 58730,
-  //   "gender": "male",
-  //   "name": "Oleg",
-  //   "probability": 1.0
-  // final stmt = db.prepare('INSERT INTO Names (count) VALUES (?), (gender) VALUES (?), (name) VALUES (?), (probability) VALUES (?)');
-  // stmt
-  //   ..execute([58730])
-  //   ..execute(['male'])
-  //   ..execute(['Oleg'])
-  //   ..execute([1.0]);
+void InsertDB(count, gender, name, probability) {
+  final db = sqlite3.open("database.db");
+  // //print(sqlite3.version);
+  // // Create a table and insert some data
+  // db.execute('''
+  //   CREATE TABLE IF NOT EXISTS Names (
+  //     count INTEGER,
+  //     gender TEXT,
+  //     name TEXT UNIQUE ON CONFLICT IGNORE,
+  //     probability REAL
+  //   );
+  // ''');
+  
   final stmt = db.execute("""
       INSERT INTO Names (count, gender, name, probability)
       values
        ('$count','$gender','$name','$probability')
-      ;""");
+      ;"""); 
+    
+      db.dispose();
 }
+
 creatFile(String name) async{
   
   File file = File("$name.txt");
-  //print(await File("hello.txt").exists());
-  //print( await File("$name.txt").exists());
-
+  
   // ignore: unrelated_type_equality_checks
    if(await File("$name.txt").exists() != true) {
    file.create();
@@ -123,7 +88,35 @@ creatFile(String name) async{
   return file;
 }
 
-void getDataInFile(File file, String text) async{
+void getDataInFile(File file, String text) async{ 
 await file.writeAsString(text, mode: FileMode.append);
+}
+
+bool checkExist(String userName,) {
+final db = sqlite3.open("database.db");
+final resultSet =
+db.select('SELECT * FROM Names WHERE name = "$userName"');
+print(resultSet);
+if(resultSet.length > 0)
+{
+  print("User allready exist");
+  return true;
+  
+}else {
+  return false;
+}
+}
+void createBase() {
+  final db = sqlite3.open("database.db");
+  //print(sqlite3.version);
+  // Create a table and insert some data
+  db.execute('''
+    CREATE TABLE IF NOT EXISTS Names (
+      count INTEGER,
+      gender TEXT,
+      name TEXT UNIQUE ON CONFLICT IGNORE,
+      probability REAL
+    );
+  ''');
 }
 
