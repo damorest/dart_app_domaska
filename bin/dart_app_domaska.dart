@@ -1,14 +1,23 @@
 import 'dart:convert' as convert;
+import 'dart:ffi';
 //import 'dart:html';
 import 'dart:io';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:http/http.dart' as http;
 
 class User {
-  var count ;
-  var gender;
-  var name;
-  var probability;
+   var count= 55 ;
+  var gender  = "man";
+  var name = "";
+  var probability = 1.00;
+
+  User(String startName){
+    this.name = startName;
+
+  }
+  toJson(){
+    return convert.jsonEncode({"count": "${this.count}", "gender": this.gender, "name": this.name, "probability": "${this.probability}" });
+  }
 
   void display() {
     print("$count $gender $name $probability");
@@ -41,13 +50,33 @@ createBase();
     final itemPobability = jsonResponse['probability'];
     var jsonString = " \n count: $itemCount\n gender: $itemGender\n name: $itemName\n prob: $itemPobability\n";
    
-   if(!checkExist(userName??""))
-   {
+   var userToSend;
+    var exustingUser = checkExist(userName??"");
+    if(exustingUser != null){
+      userToSend = exustingUser;
+      print("user exsist");
+    }else{
+   
     InsertDB(itemCount,itemGender,itemName,itemPobability);
     getDataInFile(await creatFile("example"),jsonString);
      print(" count: $itemCount\n gender: $itemGender\n name: $itemName\n prob: $itemPobability\n");
+     userToSend = new User(itemName);
 
-   }     
+    }
+
+    print(userToSend.toJson());
+
+    final urlPost = Uri.https(
+    'server-1-x67l.onrender.com',    
+  );
+  Map<String,String> headers = {
+    'Content-type' : 'application/json',
+    'Accept' : 'application/json',
+  };
+
+    var responseToSend = await http.post(urlPost, body:userToSend.toJson(),headers: headers);
+    print(responseToSend.body);
+
     
   } else {
     print('Код ошибки: ${response.statusCode}.');
@@ -92,19 +121,24 @@ void getDataInFile(File file, String text) async{
 await file.writeAsString(text, mode: FileMode.append);
 }
 
-bool checkExist(String userName,) {
-final db = sqlite3.open("database.db");
-final resultSet =
-db.select('SELECT * FROM Names WHERE name = "$userName"');
-print(resultSet);
-if(resultSet.length > 0)
-{
-  print("User allready exist");
-  return true;
-  
-}else {
-  return false;
-}
+checkExist(String userName,) {
+  final db = sqlite3.open("database.db");
+  final resultSet =
+  db.select('SELECT * FROM Names WHERE name = "$userName"');
+  print(resultSet);
+  if(resultSet.length > 0)
+  {
+    String newName = resultSet[0]["name"];
+    User user = User(newName);
+    
+    print("User allready exist");
+
+    return user;
+    
+  }
+
+  return null;
+
 }
 void createBase() {
   final db = sqlite3.open("database.db");
